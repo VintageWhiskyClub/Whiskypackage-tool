@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whisky Tasting Package Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1B2E4B; --gold: #C9A84C; --gold-light: #e8c97a;
+    --cream: #F5F0E8; --dark: #0f1a28; --muted: #7a6a5a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--dark); font-family: 'Montserrat', sans-serif;
+    color: var(--cream); min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(139,69,19,0.08) 0%, transparent 40%);
+  }
+  header { text-align: center; padding: 48px 24px 32px; border-bottom: 1px solid rgba(201,168,76,0.2); }
+  header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 12px; }
+  header h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(28px,5vw,48px); font-weight: 300; color: var(--cream); letter-spacing: 2px; }
+  header h1 em { color: var(--gold); font-style: italic; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  .controls {
+    display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end;
+    margin-bottom: 32px; padding: 24px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.15); border-radius: 4px;
+  }
+  .control-group { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
+  .control-group label { font-size: 9px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+  select, input[type=number], input[type=text] {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(201,168,76,0.3);
+    color: var(--cream); font-family: 'Montserrat', sans-serif; font-size: 13px;
+    padding: 10px 14px; border-radius: 2px; outline: none; transition: border-color 0.2s;
+  }
+  select:focus, input:focus { border-color: var(--gold); }
+  select option { background: var(--dark); }
+  .btn {
+    padding: 11px 24px; background: var(--gold); color: var(--dark); border: none;
+    font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 3px; text-transform: uppercase; cursor: pointer; border-radius: 2px;
+    transition: background 0.2s, transform 0.1s; white-space: nowrap; align-self: flex-end;
+  }
+  .btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .btn-outline { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+  .btn-outline:hover { background: rgba(201,168,76,0.1); transform: none; }
+
+  .builder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  @media(max-width:700px) { .builder-grid { grid-template-columns: 1fr; } }
+
+  .panel { background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.15); border-radius: 4px; overflow: hidden; }
+  .panel-header {
+    background: var(--navy); padding: 14px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .panel-header h3 { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 400; letter-spacing: 1px; color: var(--gold); }
+  .panel-header span { font-size: 10px; color: rgba(245,240,232,0.5); letter-spacing: 1px; }
+
+  .whisky-list { padding: 8px 0; max-height: 420px; overflow-y: auto; }
+  .whisky-item {
+    display: grid; grid-template-columns: 20px 1fr auto auto;
+    align-items: center; gap: 10px; padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;
+  }
+  .whisky-item:last-child { border-bottom: none; }
+  .whisky-item:hover { background: rgba(255,255,255,0.03); }
+  .whisky-item input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; }
+  .whisky-name { font-size: 12px; font-weight: 500; color: var(--cream); cursor: pointer; }
+  .whisky-name small { display: block; font-size: 10px; color: var(--muted); font-weight: 300; margin-top: 1px; }
+  .price-badge { font-size: 12px; font-weight: 600; color: var(--gold); text-align: right; white-space: nowrap; }
+  .price-badge small { display: block; font-size: 9px; color: var(--muted); font-weight: 300; }
+  .remove-btn {
+    background: none; border: none; color: rgba(231,76,60,0.4); cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 2px 4px; border-radius: 2px;
+    transition: color 0.2s; flex-shrink: 0;
+  }
+  .remove-btn:hover { color: #e74c3c; }
+
+  .warning-badge {
+    display: inline-block; background: rgba(192,57,43,0.15); color: #e74c3c;
+    font-size: 9px; padding: 2px 6px; border-radius: 2px; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* Add whisky form */
+  .add-whisky-form { padding: 16px; border-top: 1px solid rgba(201,168,76,0.15); background: rgba(201,168,76,0.03); }
+  .add-whisky-form .form-title { font-size: 9px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; }
+  .add-form-grid { display: grid; grid-template-columns: 1fr 80px 80px 80px auto; gap: 8px; align-items: end; }
+  @media(max-width:900px) { .add-form-grid { grid-template-columns: 1fr 1fr; } }
+  .add-form-grid input { padding: 8px 10px; font-size: 12px; }
+  .add-form-grid .field-label { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+  .add-form-grid .btn { padding: 9px 16px; font-size: 9px; }
+
+  /* Totals */
+  .package-summary {
+    background: var(--navy); border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 4px; padding: 28px; margin-bottom: 32px;
+  }
+  .summary-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .summary-header h2 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--cream); }
+  .markup-row { display: flex; align-items: center; gap: 12px; }
+  .markup-row label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); }
+  .markup-row input { width: 80px; text-align: center; }
+
+  .selected-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 13px;
+  }
+  .selected-row:last-child { border-bottom: none; }
+  .selected-row .pour-size { color: var(--muted); font-size: 11px; margin-left: 8px; }
+  .selected-row .cost { color: var(--gold); font-weight: 600; }
+
+  .summary-totals {
+    background: rgba(0,0,0,0.2); border-radius: 3px; padding: 16px 20px;
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; text-align: center;
+  }
+  .total-block .label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .total-block .value { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; color: var(--gold); }
+  .total-block .value.charge { color: var(--gold-light); font-size: 34px; }
+  .total-block .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; font-style: italic; }
+
+  /* Presets */
+  .section-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--gold); margin-bottom: 16px; letter-spacing: 1px; }
+  .presets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 16px; margin-bottom: 40px; }
+  .preset-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 4px; padding: 18px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  }
+  .preset-card:hover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+  .preset-card h4 { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 400; color: var(--cream); margin-bottom: 6px; }
+  .preset-card .preset-whiskies { font-size: 10px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+  .preset-card .preset-price { font-size: 20px; font-family: 'Cormorant Garamond', serif; color: var(--gold); }
+  .preset-card .preset-price small { font-size: 10px; color: var(--muted); font-family: 'Montserrat', sans-serif; display: block; margin-top: 2px; }
+
+  .divider { border: none; border-top: 1px solid rgba(201,168,76,0.15); margin: 32px 0; }
+  .whisky-list::-webkit-scrollbar { width: 4px; }
+  .whisky-list::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Open in browser notice — shown if JS hasn't fired properly -->
+<div id="jsBanner" style="background:#7D6608;color:#fff;text-align:center;padding:12px 20px;font-family:sans-serif;font-size:13px;letter-spacing:0.5px;">
+  ⚠ If this page looks blank or broken, please <strong>save this file</strong> and open it in <strong>Chrome, Safari or Edge</strong> — do not open it directly from WhatsApp or your email app.
+</div>
+
+<header>
+  <div class="eyebrow">Vintage Whisky Club</div>
+  <h1>Tasting Package <em>Builder</em></h1>
+</header>
+
+<div class="container">
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Pour Size</label>
+      <select id="pourSize" onchange="refresh()">
+        <option value="1.5">1.5cl</option>
+        <option value="2.5" selected>2.5cl</option>
+        <option value="5">5cl</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Markup %</label>
+      <input type="number" id="markup" value="40" min="0" max="500" onchange="refresh()">
+    </div>
+    <button class="btn btn-outline" onclick="clearAll()">Clear Selection</button>
+    <button class="btn btn-outline" onclick="exportStock()" title="Save stock list to share">⬇ Export Stock</button>
+    <label class="btn btn-outline" style="cursor:pointer;margin-bottom:0" title="Load a stock list">⬆ Import Stock
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importStock(event)">
+    </label>
+  </div>
+
+  <div id="importNotice" style="display:none;background:rgba(30,86,49,0.2);border:1px solid rgba(30,86,49,0.5);color:#a8e6bf;padding:10px 20px;border-radius:4px;font-size:12px;margin-bottom:16px;letter-spacing:1px;">
+    ✓ Stock list imported successfully
+  </div>
+
+  <div class="builder-grid">
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Your Stock</h3>
+        <span id="selCount">0 selected</span>
+      </div>
+      <div class="whisky-list" id="whiskyList"></div>
+      <div class="add-whisky-form">
+        <div class="form-title">+ Add a Whisky to Stock</div>
+        <div class="add-form-grid">
+          <div>
+            <span class="field-label">Name</span>
+            <input type="text" id="newName" placeholder="e.g. Springbank 15">
+          </div>
+          <div>
+            <span class="field-label">1.5cl £</span>
+            <input type="number" id="newP15" placeholder="0.00" step="0.01" min="0">
+          </div>
+          <div>
+            <span class="field-label">2.5cl £</span>
+            <input type="number" id="newP25" placeholder="0.00" step="0.01" min="0">
+          </div>
+          <div>
+            <span class="field-label">5cl £</span>
+            <input type="number" id="newP5" placeholder="0.00" step="0.01" min="0">
+          </div>
+          <button class="btn" onclick="addWhisky()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <h3>Package Selection</h3>
+        <span id="packageDesc">—</span>
+      </div>
+      <div class="whisky-list" id="selectedList">
+        <div class="empty-state">Tick whiskies on the left to build your package</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="package-summary">
+    <div class="summary-header">
+      <h2>Package Pricing</h2>
+      <div class="markup-row">
+        <label>Markup</label>
+        <input type="number" id="markup2" value="40" min="0" max="500"
+               onchange="document.getElementById('markup').value=this.value; refresh()">
+        <span style="font-size:12px;color:var(--gold)">%</span>
+      </div>
+    </div>
+    <div id="totalBlock"><div class="empty-state">No whiskies selected yet</div></div>
+  </div>
+
+  <hr class="divider">
+  <div class="section-title">Suggested Packages</div>
+  <div class="presets-grid" id="presetsGrid"></div>
+
+</div>
+
+<script>
+// ── COMBINED STOCK ────────────────────────────────────────────────────────
+// Merged from both invoice lists (INV-0638 Queens/VWC + INV-0623 Langans/VWC)
+// Where a whisky appeared on both lists, prices are averaged.
+let STOCK = [
+  { name: "Craigellachie",    note: "INV-0638",            missing: false, prices: { 1.5: 2.51,  2.5: 4.18,   5: 8.36   } },
+  { name: "Isle of Arran 27", note: "INV-0638",            missing: false, prices: { 1.5: 4.74,  2.5: 7.91,   5: 15.81  } },
+  { name: "Port Charlotte",   note: "INV-0638 / INV-0623", missing: false, prices: { 1.5: 7.32,  2.5: 12.19,  5: 24.39  } },
+  { name: "Secret Series 4",  note: "INV-0638",            missing: false, prices: { 1.5: 7.70,  2.5: 12.84,  5: 25.67  } },
+  { name: "Mortlach 27",      note: "INV-0623",            missing: false, prices: { 1.5: 21.97, 2.5: 36.61,  5: 73.22  } },
+  { name: "The Marriage",     note: "INV-0623",            missing: false, prices: { 1.5: 55.70, 2.5: 92.84,  5: 185.67 } },
+];
+
+let selected = new Set();
+
+const getPour   = () => parseFloat(document.getElementById('pourSize').value);
+const getMarkup = () => parseFloat(document.getElementById('markup').value) || 0;
+
+function buildStockList() {
+  const pour = getPour();
+  document.getElementById('whiskyList').innerHTML = STOCK.map((w, i) => `
+    <div class="whisky-item">
+      <input type="checkbox" id="w${i}" ${selected.has(w.name) ? 'checked' : ''}
+             onchange="toggle('${w.name.replace(/'/g,"\\'")}')">
+      <label class="whisky-name" for="w${i}">
+        ${w.name}
+        <small>${w.missing ? '<span class="warning-badge">awaiting stock</span>' : w.note}</small>
+      </label>
+      <div class="price-badge">£${w.prices[pour].toFixed(2)}<small>${pour}cl pour</small></div>
+      <button class="remove-btn" onclick="removeWhisky('${w.name.replace(/'/g,"\\'")}', event)" title="Remove from stock">✕</button>
+    </div>`).join('');
+  document.getElementById('selCount').textContent = `${selected.size} selected`;
+}
+
+function removeWhisky(name, e) {
+  e.stopPropagation();
+  if (!confirm(`Remove "${name}" from stock?`)) return;
+  STOCK = STOCK.filter(w => w.name !== name);
+  selected.delete(name);
+  refresh();
+}
+
+function buildSelectedPanel() {
+  const pour = getPour(), markup = getMarkup();
+  const sel  = STOCK.filter(w => selected.has(w.name));
+
+  if (!sel.length) {
+    document.getElementById('selectedList').innerHTML = '<div class="empty-state">Tick whiskies on the left to build your package</div>';
+    document.getElementById('totalBlock').innerHTML   = '<div class="empty-state">No whiskies selected yet</div>';
+    document.getElementById('packageDesc').textContent = '—';
+    return;
+  }
+
+  document.getElementById('packageDesc').textContent = `${sel.length} dram${sel.length>1?'s':''} · ${pour}cl pours`;
+
+  document.getElementById('selectedList').innerHTML = sel.map(w => `
+    <div class="selected-row">
+      <span>${w.name} <span class="pour-size">${pour}cl</span></span>
+      <span class="cost">£${w.prices[pour].toFixed(2)}</span>
+    </div>`).join('');
+
+  const cost   = sel.reduce((s,w) => s + w.prices[pour], 0);
+  const charge = cost * (1 + markup/100);
+  const profit = charge - cost;
+
+  document.getElementById('totalBlock').innerHTML = `
+    <div class="summary-totals">
+      <div class="total-block">
+        <div class="label">Cost Price</div>
+        <div class="value">£${cost.toFixed(2)}</div>
+        <div class="sub">${sel.length} drams · ${pour}cl</div>
+      </div>
+      <div class="total-block">
+        <div class="label">Charge Per Person</div>
+        <div class="value charge">£${charge.toFixed(2)}</div>
+        <div class="sub">${markup}% markup</div>
+      </div>
+      <div class="total-block">
+        <div class="label">Your Margin</div>
+        <div class="value">£${profit.toFixed(2)}</div>
+        <div class="sub">per head</div>
+      </div>
+    </div>`;
+}
+
+function buildPresets() {
+  const pour = getPour(), markup = getMarkup();
+  const avail = [...STOCK].filter(w => !w.missing).sort((a,b) => a.prices[pour] - b.prices[pour]);
+  const n = avail.length;
+
+  const presets = [
+    { name: "Introduction",       desc: "Three accessible drams to open the evening", w: avail.slice(0,3) },
+    { name: "Classic Flight",     desc: "Four drams across a range of styles",         w: avail.slice(0,4) },
+    { name: "Premium Selection",  desc: "Moving into the mid to premium range",        w: avail.slice(Math.floor(n/3), Math.floor(n/3)+4) },
+    { name: "Collector's Flight", desc: "The finest expressions in the collection",    w: avail.slice(-4) },
+    { name: "Full Collection",    desc: "Every whisky currently in stock",             w: avail },
+  ];
+
+  document.getElementById('presetsGrid').innerHTML = presets.map(p => {
+    const cost   = p.w.reduce((s,w) => s + w.prices[pour], 0);
+    const charge = cost * (1 + markup/100);
+    return `<div class="preset-card" onclick="loadPreset(${JSON.stringify(p.w.map(w=>w.name))})">
+      <h4>${p.name}</h4>
+      <div class="preset-whiskies">${p.desc}<br><br>${p.w.map(w=>w.name).join(' · ')}</div>
+      <div class="preset-price">£${charge.toFixed(2)}
+        <small>per person · ${pour}cl · ${markup}% markup</small>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addWhisky() {
+  const name = document.getElementById('newName').value.trim();
+  const p15  = parseFloat(document.getElementById('newP15').value);
+  const p25  = parseFloat(document.getElementById('newP25').value);
+  const p5   = parseFloat(document.getElementById('newP5').value);
+  if (!name) { alert('Please enter a whisky name.'); return; }
+  if (isNaN(p15)||isNaN(p25)||isNaN(p5)) { alert('Please enter prices for all three pour sizes.'); return; }
+  if (STOCK.find(w => w.name.toLowerCase()===name.toLowerCase())) { alert('That whisky is already in stock.'); return; }
+  STOCK.push({ name, note: 'Added manually', missing: false, prices: { 1.5: p15, 2.5: p25, 5: p5 } });
+  ['newName','newP15','newP25','newP5'].forEach(id => document.getElementById(id).value='');
+  refresh();
+}
+
+function exportStock() {
+  const data = JSON.stringify({ vwc_stock: STOCK, exported: new Date().toLocaleDateString('en-GB') }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `VWC_Stock_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importStock(event) {
+  const file   = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.vwc_stock || !Array.isArray(data.vwc_stock)) throw new Error('Invalid file');
+      STOCK    = data.vwc_stock;
+      selected = new Set();
+      refresh();
+      const notice = document.getElementById('importNotice');
+      notice.style.display = 'block';
+      setTimeout(() => notice.style.display = 'none', 3000);
+    } catch { alert('Could not read stock file. Please use a file exported from this tool.'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function toggle(name) { selected.has(name) ? selected.delete(name) : selected.add(name); refresh(); }
+function loadPreset(names) { selected = new Set(names); refresh(); }
+function clearAll() { selected.clear(); refresh(); }
+
+function refresh() {
+  document.getElementById('markup2').value = document.getElementById('markup').value;
+  buildStockList(); buildSelectedPanel(); buildPresets();
+}
+
+refresh();
+// Hide the open-in-browser warning once JS runs successfully
+(function(){ var b=document.getElementById('jsBanner'); if(b) b.style.display='none'; })();
+</script>
+</body>
+</html>
