@@ -79,13 +79,11 @@
     transition: color 0.2s; flex-shrink: 0;
   }
   .remove-btn:hover { color: #e74c3c; }
-
   .warning-badge {
     display: inline-block; background: rgba(192,57,43,0.15); color: #e74c3c;
     font-size: 9px; padding: 2px 6px; border-radius: 2px; letter-spacing: 1px; text-transform: uppercase;
   }
 
-  /* Add whisky form */
   .add-whisky-form { padding: 16px; border-top: 1px solid rgba(201,168,76,0.15); background: rgba(201,168,76,0.03); }
   .add-whisky-form .form-title { font-size: 9px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; }
   .add-form-grid { display: grid; grid-template-columns: 1fr 80px 80px 80px auto; gap: 8px; align-items: end; }
@@ -94,7 +92,6 @@
   .add-form-grid .field-label { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
   .add-form-grid .btn { padding: 9px 16px; font-size: 9px; }
 
-  /* Totals */
   .package-summary {
     background: var(--navy); border: 1px solid rgba(201,168,76,0.25);
     border-radius: 4px; padding: 28px; margin-bottom: 32px;
@@ -126,7 +123,6 @@
   .total-block .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
   .empty-state { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; font-style: italic; }
 
-  /* Presets */
   .section-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--gold); margin-bottom: 16px; letter-spacing: 1px; }
   .presets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 16px; margin-bottom: 40px; }
   .preset-card {
@@ -146,11 +142,6 @@
 </head>
 <body>
 
-<!-- Open in browser notice — shown if JS hasn't fired properly -->
-<div id="jsBanner" style="background:#7D6608;color:#fff;text-align:center;padding:12px 20px;font-family:sans-serif;font-size:13px;letter-spacing:0.5px;">
-  ⚠ If this page looks blank or broken, please <strong>save this file</strong> and open it in <strong>Chrome, Safari or Edge</strong> — do not open it directly from WhatsApp or your email app.
-</div>
-
 <header>
   <div class="eyebrow">Vintage Whisky Club</div>
   <h1>Tasting Package <em>Builder</em></h1>
@@ -169,11 +160,11 @@
     </div>
     <div class="control-group">
       <label>Markup %</label>
-      <input type="number" id="markup" value="40" min="0" max="500" onchange="refresh()">
+      <input type="number" id="markup" value="40" min="0" max="500" oninput="refresh()">
     </div>
     <button class="btn btn-outline" onclick="clearAll()">Clear Selection</button>
-    <button class="btn btn-outline" onclick="exportStock()" title="Save stock list to share">⬇ Export Stock</button>
-    <label class="btn btn-outline" style="cursor:pointer;margin-bottom:0" title="Load a stock list">⬆ Import Stock
+    <button class="btn btn-outline" onclick="exportStock()">⬇ Export Stock</button>
+    <label class="btn btn-outline" style="cursor:pointer;margin-bottom:0">⬆ Import Stock
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importStock(event)">
     </label>
   </div>
@@ -229,8 +220,8 @@
       <h2>Package Pricing</h2>
       <div class="markup-row">
         <label>Markup</label>
-        <input type="number" id="markup2" value="40" min="0" max="500"
-               onchange="document.getElementById('markup').value=this.value; refresh()">
+        <input type="number" id="markupDisplay" value="40" min="0" max="500"
+               oninput="document.getElementById('markup').value=this.value; refresh()">
         <span style="font-size:12px;color:var(--gold)">%</span>
       </div>
     </div>
@@ -244,22 +235,19 @@
 </div>
 
 <script>
-// ── COMBINED STOCK ────────────────────────────────────────────────────────
-// Merged from both invoice lists (INV-0638 Queens/VWC + INV-0623 Langans/VWC)
-// Where a whisky appeared on both lists, prices are averaged.
 let STOCK = [
-  { name: "Craigellachie",    note: "INV-0638",            missing: false, prices: { 1.5: 2.51,  2.5: 4.18,   5: 8.36   } },
-  { name: "Isle of Arran 27", note: "INV-0638",            missing: false, prices: { 1.5: 4.74,  2.5: 7.91,   5: 15.81  } },
-  { name: "Port Charlotte",   note: "INV-0638 / INV-0623", missing: false, prices: { 1.5: 7.32,  2.5: 12.19,  5: 24.39  } },
-  { name: "Secret Series 4",  note: "INV-0638",            missing: false, prices: { 1.5: 7.70,  2.5: 12.84,  5: 25.67  } },
-  { name: "Mortlach 27",      note: "INV-0623",            missing: false, prices: { 1.5: 21.97, 2.5: 36.61,  5: 73.22  } },
-  { name: "The Marriage",     note: "INV-0623",            missing: false, prices: { 1.5: 55.70, 2.5: 92.84,  5: 185.67 } },
+  { name: "Craigellachie",    note: "INV-0638",            missing: false, prices: { 1.5: 2.51,  2.5: 4.18,  5: 8.36   } },
+  { name: "Isle of Arran 27", note: "INV-0638",            missing: false, prices: { 1.5: 4.74,  2.5: 7.91,  5: 15.81  } },
+  { name: "Port Charlotte",   note: "INV-0638 / INV-0623", missing: false, prices: { 1.5: 7.32,  2.5: 12.19, 5: 24.39  } },
+  { name: "Secret Series 4",  note: "INV-0638",            missing: false, prices: { 1.5: 7.70,  2.5: 12.84, 5: 25.67  } },
+  { name: "Mortlach 27",      note: "INV-0623",            missing: false, prices: { 1.5: 21.97, 2.5: 36.61, 5: 73.22  } },
+  { name: "The Marriage",     note: "INV-0623",            missing: false, prices: { 1.5: 55.70, 2.5: 92.84, 5: 185.67 } },
 ];
 
 let selected = new Set();
 
-const getPour   = () => parseFloat(document.getElementById('pourSize').value);
-const getMarkup = () => parseFloat(document.getElementById('markup').value) || 0;
+function getPour()   { return parseFloat(document.getElementById('pourSize').value); }
+function getMarkup() { return parseFloat(document.getElementById('markup').value) || 0; }
 
 function buildStockList() {
   const pour = getPour();
@@ -304,8 +292,8 @@ function buildSelectedPanel() {
       <span class="cost">£${w.prices[pour].toFixed(2)}</span>
     </div>`).join('');
 
-  const cost   = sel.reduce((s,w) => s + w.prices[pour], 0);
-  const charge = cost * (1 + markup/100);
+  const cost   = sel.reduce((s, w) => s + w.prices[pour], 0);
+  const charge = cost * (1 + markup / 100);
   const profit = charge - cost;
 
   document.getElementById('totalBlock').innerHTML = `
@@ -330,23 +318,23 @@ function buildSelectedPanel() {
 
 function buildPresets() {
   const pour = getPour(), markup = getMarkup();
-  const avail = [...STOCK].filter(w => !w.missing).sort((a,b) => a.prices[pour] - b.prices[pour]);
+  const avail = [...STOCK].filter(w => !w.missing).sort((a, b) => a.prices[pour] - b.prices[pour]);
   const n = avail.length;
 
   const presets = [
-    { name: "Introduction",       desc: "Three accessible drams to open the evening", w: avail.slice(0,3) },
-    { name: "Classic Flight",     desc: "Four drams across a range of styles",         w: avail.slice(0,4) },
+    { name: "Introduction",       desc: "Three accessible drams to open the evening", w: avail.slice(0, 3) },
+    { name: "Classic Flight",     desc: "Four drams across a range of styles",         w: avail.slice(0, 4) },
     { name: "Premium Selection",  desc: "Moving into the mid to premium range",        w: avail.slice(Math.floor(n/3), Math.floor(n/3)+4) },
     { name: "Collector's Flight", desc: "The finest expressions in the collection",    w: avail.slice(-4) },
     { name: "Full Collection",    desc: "Every whisky currently in stock",             w: avail },
   ];
 
-  document.getElementById('presetsGrid').innerHTML = presets.map(p => {
-    const cost   = p.w.reduce((s,w) => s + w.prices[pour], 0);
-    const charge = cost * (1 + markup/100);
-    return `<div class="preset-card" onclick="loadPreset(${JSON.stringify(p.w.map(w=>w.name))})">
+  document.getElementById('presetsGrid').innerHTML = presets.filter(p => p.w.length > 0).map(p => {
+    const cost   = p.w.reduce((s, w) => s + w.prices[pour], 0);
+    const charge = cost * (1 + markup / 100);
+    return `<div class="preset-card" onclick="loadPreset(${JSON.stringify(p.w.map(w => w.name))})">
       <h4>${p.name}</h4>
-      <div class="preset-whiskies">${p.desc}<br><br>${p.w.map(w=>w.name).join(' · ')}</div>
+      <div class="preset-whiskies">${p.desc}<br><br>${p.w.map(w => w.name).join(' · ')}</div>
       <div class="preset-price">£${charge.toFixed(2)}
         <small>per person · ${pour}cl · ${markup}% markup</small>
       </div>
@@ -360,10 +348,10 @@ function addWhisky() {
   const p25  = parseFloat(document.getElementById('newP25').value);
   const p5   = parseFloat(document.getElementById('newP5').value);
   if (!name) { alert('Please enter a whisky name.'); return; }
-  if (isNaN(p15)||isNaN(p25)||isNaN(p5)) { alert('Please enter prices for all three pour sizes.'); return; }
-  if (STOCK.find(w => w.name.toLowerCase()===name.toLowerCase())) { alert('That whisky is already in stock.'); return; }
+  if (isNaN(p15) || isNaN(p25) || isNaN(p5)) { alert('Please enter prices for all three pour sizes.'); return; }
+  if (STOCK.find(w => w.name.toLowerCase() === name.toLowerCase())) { alert('That whisky is already in stock.'); return; }
   STOCK.push({ name, note: 'Added manually', missing: false, prices: { 1.5: p15, 2.5: p25, 5: p5 } });
-  ['newName','newP15','newP25','newP5'].forEach(id => document.getElementById(id).value='');
+  ['newName','newP15','newP25','newP5'].forEach(id => document.getElementById(id).value = '');
   refresh();
 }
 
@@ -377,7 +365,7 @@ function exportStock() {
 }
 
 function importStock(event) {
-  const file   = event.target.files[0];
+  const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
@@ -401,13 +389,15 @@ function loadPreset(names) { selected = new Set(names); refresh(); }
 function clearAll() { selected.clear(); refresh(); }
 
 function refresh() {
-  document.getElementById('markup2').value = document.getElementById('markup').value;
-  buildStockList(); buildSelectedPanel(); buildPresets();
+  // Keep both markup fields in sync
+  const markupVal = document.getElementById('markup').value;
+  document.getElementById('markupDisplay').value = markupVal;
+  buildStockList();
+  buildSelectedPanel();
+  buildPresets();
 }
 
 refresh();
-// Hide the open-in-browser warning once JS runs successfully
-(function(){ var b=document.getElementById('jsBanner'); if(b) b.style.display='none'; })();
 </script>
 </body>
 </html>
